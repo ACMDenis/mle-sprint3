@@ -1,12 +1,35 @@
-# импортируем класс для создания экземпляра FastAPI-приложения
-from fastapi import FastAPI
-import random
+"""Приложение Fast API для модели предсказания кредитного рейтинга."""
 
-# создаём экземпляр FastAPI-приложения
+from fastapi import FastAPI, Body
+from fast_api_handler import FastApiHandler
+
+# создаём приложение FastAPI
 app = FastAPI()
 
-@app.get("/api/credit/{client_id}")
-def is_credit_approved(client_id: str) -> dict:
-    """Определяет одобрение кредита на основе случайного кредитного рейтинга"""
-    score = random.uniform(0, 1)
-    return {"approved": 1} if score > 0.8 else {"approved": 0}
+# создаём обработчик запросов для API
+app.handler = FastApiHandler()
+
+@app.post("/api/credit/") 
+def is_credit_approved(client_id: str, model_params: dict):
+    """Функция определяет, выдать кредит или нет, на основании кредитного рейтинга клиента.
+
+    Args:
+        client_id (str): Идентификатор клиента.
+        model_params (dict): Произвольный словарь с параметрами для модели.
+
+    Returns:
+        dict: Предсказание, выдаётся ли кредит.
+    """
+    
+    all_params = {
+            "client_id": client_id,
+            "model_params": model_params
+        }
+    
+    user_prediction = app.handler.handle(all_params) # обращаемся к модели
+    score = user_prediction["predicted_credit_rating"] # получаем score
+    if score >= 600: # сравниваем с порогом
+            approved = 1 # положительное решение, если выше
+    else
+            approved = 0 # отрицательное решение, если ниже
+    return {"client_id": client_id, "approved": approved} # ответ
